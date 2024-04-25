@@ -109,7 +109,7 @@ router.post(
   }
 );
 
-router.post("/users/me/avatar", auth, async (req, res) => {
+router.delete("/users/me/avatar", auth, async (req, res) => {
   req.user.avatat = undefined;
   await req.user.save;
   res.send();
