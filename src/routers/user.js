@@ -3,6 +3,7 @@ const router = new express.Router();
 const User = require("../models/user");
 const auth = require("../middleware/auth");
 const multer = require("multer");
+const sharp = require("sharp");
 
 router.post("/users", async (req, res) => {
   const user = new User(req.body);
@@ -100,7 +101,11 @@ router.post(
   auth,
   upload.single("avatar"),
   async (req, res) => {
-    req.user.avatar = req.file.buffer;
+    const buffer = await sharp(req.file.buffer)
+      .resize({ width: 250, height: 250 })
+      .png()
+      .toBuffer();
+    req.user.avatar = buffer;
     await req.user.save();
     res.send();
   },
@@ -113,5 +118,18 @@ router.delete("/users/me/avatar", auth, async (req, res) => {
   req.user.avatat = undefined;
   await req.user.save;
   res.send();
+});
+
+router.get("/users/:id/avatar", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user || !user.avatar) {
+      throw new Error();
+    }
+    res.set("Content-Type", "image/png");
+    res.send(user.avatar);
+  } catch (e) {
+    res.status(404).send();
+  }
 });
 module.exports = router;
